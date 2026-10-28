@@ -52,8 +52,8 @@ enum NotchAgentLimitReadingTests {
                             let context = "\(language.rawValue), \(width) pt, \(title), \(share), reset \(countdown ?? "none")"
                             suite.expect(readings.count == 1, "one visible limit reading: \(context)")
                             guard let reading = readings.first else { continue }
-                            let value = reading.accessibilityValue?() as? String ?? reading.accessibilityLabel?()
-                            suite.expect(value == share, "the visible limit names remaining or used: \(context)")
+                            suite.expect(readingText(reading) == share,
+                                         "the visible limit names remaining or used: \(context)")
                             let frame = reading.accessibilityFrame?() ?? .zero
                             let bounds = window.convertToScreen(host.convert(host.bounds, to: nil))
                             suite.expect(frame.width >= required - 1 && frame.minX >= bounds.minX - 1
@@ -82,6 +82,17 @@ enum NotchAgentLimitReadingTests {
         host.layoutSubtreeIfNeeded()
         RunLoop.main.run(until: Date().addingTimeInterval(0.05))
         host.layoutSubtreeIfNeeded()
+    }
+
+    @MainActor private static func readingText(_ element: AnyObject) -> String? {
+        // AppKit declares several return types for this selector. Use its
+        // object result without selecting a control-specific Swift overload.
+        let selector = NSSelectorFromString("accessibilityValue")
+        if let object = element as? NSObject, object.responds(to: selector),
+           let value = object.perform(selector)?.takeUnretainedValue() as? String {
+            return value
+        }
+        return element.accessibilityLabel?()
     }
 
     // SwiftUI's nodes expose the selectors without inheriting from
