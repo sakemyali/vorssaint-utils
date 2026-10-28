@@ -25,6 +25,8 @@ enum NotchAgentLimitReadingTests {
                               styleMask: [], backing: .buffered, defer: false)
         window.isReleasedWhenClosed = false
         defer { window.contentView = nil; window.close() }
+        // Two cards at the pairing threshold, each with 12-point side padding.
+        let smallestPairedWidth = (NotchAgentSupport.pairWidth - NotchAgentSupport.spacing) / 2 - 24
         for language in AppLanguage.allCases {
             let text = FeatureStrings.notchAgents(language)
             let locale = language.formattingLocale()
@@ -35,7 +37,7 @@ enum NotchAgentLimitReadingTests {
                 let full = NSHostingView(rootView: Text(share)
                     .font(.system(size: 12, weight: .semibold, design: .rounded)).monospacedDigit().fixedSize())
                 let required = full.fittingSize.width
-                for width: CGFloat in [183, 223] {
+                for width: CGFloat in [smallestPairedWidth, 183, 223] {
                     for title in [text.session, "\(text.weekly) · Sonnet"] {
                         for countdown in [nil, AgentFormat.duration(6 * 86_400 + 23 * 3600, locale: locale),
                                           "≈ " + AgentFormat.duration(4 * 3600 + 59 * 60, locale: locale)] {
