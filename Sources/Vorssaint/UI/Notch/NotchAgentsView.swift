@@ -188,6 +188,7 @@ private struct NotchAgentLimitReading: View {
                         .font(.system(size: 9.5))
                         .foregroundStyle(.secondary)
                         .fixedSize()
+                        .accessibilityIdentifier("notch.agentLimitCountdown")
                     Spacer(minLength: 2)
                     reading
                 }

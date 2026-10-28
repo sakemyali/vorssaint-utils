@@ -14,7 +14,8 @@ enum NotchAgentLimitReadingTests {
     @MainActor private static func checks(_ suite: TestSuite) {
         let window = NSWindow(contentRect: CGRect(x: -10_000, y: -10_000, width: 223, height: 24),
                               styleMask: [], backing: .buffered, defer: false)
-        defer { window.contentView = nil }
+        window.isReleasedWhenClosed = false
+        defer { window.contentView = nil; window.close() }
         for language in AppLanguage.allCases {
             let text = FeatureStrings.notchAgents(language)
             let locale = language.formattingLocale()
@@ -51,6 +52,18 @@ enum NotchAgentLimitReadingTests {
                     }
                 }
             }
+        }
+        for (width, showsCountdown): (CGFloat, Bool) in [(183, false), (320, true)] {
+            let host = NSHostingView(rootView: NotchAgentLimitReading(
+                title: "Week · Sonnet", share: "100% used", countdown: "6d 23h", tint: .white)
+                .frame(width: width, height: 24))
+            window.contentView = host
+            window.setContentSize(CGSize(width: width, height: 24))
+            host.layoutSubtreeIfNeeded()
+            let countdown = elements(host.accessibilityChildren() ?? [])
+                .filter { $0.accessibilityIdentifier() == "notch.agentLimitCountdown" }
+            suite.expect(countdown.isEmpty != showsCountdown,
+                         "a reset countdown gives way only when the complete reading needs its room at \(width) pt")
         }
     }
 
