@@ -21,7 +21,7 @@ enum NotchAgentLimitReadingTests {
             let locale = language.formattingLocale()
             for display in NotchAgentLimitDisplay.allCases {
                 let limit = AgentLimitWindow(id: "reading", kind: .weekly, minutes: 10_080, scope: "Sonnet",
-                                             usedPercent: display == .remaining ? 1 : 100, resetsAt: nil)
+                                             usedPercent: display == .remaining ? 0 : 100, resetsAt: nil)
                 let share = NotchAgentSupport.limitShare(limit, display: display, text: text)
                 let full = NSHostingView(rootView: Text(share)
                     .font(.system(size: 12, weight: .semibold, design: .rounded)).monospacedDigit().fixedSize())
@@ -55,7 +55,7 @@ enum NotchAgentLimitReadingTests {
         }
         for (width, showsCountdown): (CGFloat, Bool) in [(183, false), (320, true)] {
             let host = NSHostingView(rootView: NotchAgentLimitReading(
-                title: "Week · Sonnet", share: "100% used", countdown: "6d 23h", tint: .white)
+                title: "Week · Sonnet", share: "100% used", countdown: "≈ 6d 23h", tint: .white)
                 .frame(width: width, height: 24))
             window.contentView = host
             window.setContentSize(CGSize(width: width, height: 24))
