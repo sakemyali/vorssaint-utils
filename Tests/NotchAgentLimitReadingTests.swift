@@ -12,6 +12,7 @@ enum NotchAgentLimitReadingTests {
     }
 
     @MainActor private static func checks(_ suite: TestSuite) {
+        _ = NSApplication.shared
         let window = NSWindow(contentRect: CGRect(x: -10_000, y: -10_000, width: 223, height: 24),
                               styleMask: [], backing: .buffered, defer: false)
         window.isReleasedWhenClosed = false
