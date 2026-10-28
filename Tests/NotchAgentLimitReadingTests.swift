@@ -68,7 +68,7 @@ enum NotchAgentLimitReadingTests {
         }
     }
 
-    private static func elements(_ children: [Any]) -> [NSAccessibilityElement] {
+    @MainActor private static func elements(_ children: [Any]) -> [NSAccessibilityElement] {
         children.flatMap { child in
             if let element = child as? NSAccessibilityElement {
                 return [element] + elements(element.accessibilityChildren() ?? [])

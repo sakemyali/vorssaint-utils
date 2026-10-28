@@ -180,18 +180,18 @@ private struct NotchAgentLimitReading: View {
 
     var body: some View {
         ViewThatFits(in: .horizontal) {
-            if let countdown {
-                HStack(spacing: 5) {
-                    heading.fixedSize()
+            HStack(spacing: 5) {
+                heading.fixedSize()
+                if let countdown {
                     Label(countdown, systemImage: "arrow.clockwise")
                         .labelStyle(NotchAgentInlineLabel())
                         .font(.system(size: 9.5))
                         .foregroundStyle(.secondary)
                         .fixedSize()
                         .accessibilityIdentifier("notch.agentLimitCountdown")
-                    Spacer(minLength: 2)
-                    reading
                 }
+                Spacer(minLength: 2)
+                reading
             }
             HStack(spacing: 5) {
                 heading.minimumScaleFactor(0.8)
