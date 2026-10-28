@@ -13,6 +13,14 @@ enum NotchAgentLimitReadingTests {
 
     @MainActor private static func checks(_ suite: TestSuite) {
         _ = NSApplication.shared
+        // SwiftUI creates accessibility nodes lazily. Enable them only in
+        // this process and restore the previous value when the checks end.
+        let attribute = "AXEnhancedUserInterface"
+        let getter = NSSelectorFromString("accessibilityAttributeValue:")
+        let setter = NSSelectorFromString("accessibilitySetValue:forAttribute:")
+        let previous = NSApp.perform(getter, with: attribute)?.takeUnretainedValue() as? NSNumber ?? false
+        NSApp.perform(setter, with: true, with: attribute)
+        defer { NSApp.perform(setter, with: previous, with: attribute) }
         let window = NSWindow(contentRect: CGRect(x: -10_000, y: -10_000, width: 223, height: 24),
                               styleMask: [], backing: .buffered, defer: false)
         window.isReleasedWhenClosed = false
@@ -36,15 +44,15 @@ enum NotchAgentLimitReadingTests {
                                 .environment(\.locale, locale).frame(width: width, height: 24))
                             window.contentView = host
                             window.setContentSize(CGSize(width: width, height: 24))
-                            host.layoutSubtreeIfNeeded()
-                            let readings = elements(host.accessibilityChildren() ?? [])
-                                .filter { $0.accessibilityIdentifier() == "notch.agentLimitShare" }
+                            settle(host)
+                            let readings = elements(host)
+                                .filter { $0.accessibilityIdentifier?() == "notch.agentLimitShare" }
                             let context = "\(language.rawValue), \(width) pt, \(title), \(share), reset \(countdown ?? "none")"
                             suite.expect(readings.count == 1, "one visible limit reading: \(context)")
                             guard let reading = readings.first else { continue }
-                            let value = reading.accessibilityValue() as? String ?? reading.accessibilityLabel()
+                            let value = reading.accessibilityValue?() as? String ?? reading.accessibilityLabel?()
                             suite.expect(value == share, "the visible limit names remaining or used: \(context)")
-                            let frame = reading.accessibilityFrame()
+                            let frame = reading.accessibilityFrame?() ?? .zero
                             let bounds = window.convertToScreen(host.convert(host.bounds, to: nil))
                             suite.expect(frame.width >= required - 1 && frame.minX >= bounds.minX - 1
                                          && frame.maxX <= bounds.maxX + 1 && frame.height > 0,
@@ -60,21 +68,23 @@ enum NotchAgentLimitReadingTests {
                 .frame(width: width, height: 24))
             window.contentView = host
             window.setContentSize(CGSize(width: width, height: 24))
-            host.layoutSubtreeIfNeeded()
-            let countdown = elements(host.accessibilityChildren() ?? [])
-                .filter { $0.accessibilityIdentifier() == "notch.agentLimitCountdown" }
+            settle(host)
+            let countdown = elements(host)
+                .filter { $0.accessibilityIdentifier?() == "notch.agentLimitCountdown" }
             suite.expect(countdown.isEmpty != showsCountdown,
                          "a reset countdown gives way only when the complete reading needs its room at \(width) pt")
         }
     }
 
-    @MainActor private static func elements(_ children: [Any]) -> [NSAccessibilityElement] {
-        children.flatMap { child in
-            if let element = child as? NSAccessibilityElement {
-                return [element] + elements(element.accessibilityChildren() ?? [])
-            }
-            if let view = child as? NSView { return elements(view.accessibilityChildren() ?? []) }
-            return []
-        }
+    @MainActor private static func settle(_ host: NSView) {
+        host.layoutSubtreeIfNeeded()
+        RunLoop.main.run(until: Date().addingTimeInterval(0.05))
+        host.layoutSubtreeIfNeeded()
+    }
+
+    // SwiftUI's nodes expose the selectors without inheriting from
+    // NSAccessibilityElement or declaring NSAccessibilityProtocol.
+    @MainActor private static func elements(_ element: AnyObject) -> [AnyObject] {
+        [element] + (element.accessibilityChildren?() ?? []).flatMap { elements($0 as AnyObject) }
     }
 }
